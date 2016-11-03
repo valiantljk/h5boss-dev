@@ -36,11 +36,12 @@ def h5bread_s_pmf(fx,plate,mjd,fiber,wave):
     dwave=0
     pmfcad=plate+"/"+mjd+"/"+fiber+"/coadd"
     try:
-     if pmfcad in fx.keys():
-       dwave=fx[pmfcad][wave]
-     else:
-       print ("pmfcad %s not found in pre file"%(pmfcad,fx))
+     #if pmfcad in fx.keys():
+     dwave=fx[pmfcad][wave]
+     #else:
+     #  print ("pmfcad %s not found in pre file %s"%(pmfcad,fx))
     except Exception as e:
+      #traceback.print_exc()
       coaderr=coaderr+1
     return dwave
 
@@ -132,4 +133,4 @@ if __name__ == "__main__":
        test_h5bread_pmf(pmflist,var)
     else: 
        print ("read from pre-selected file %s"%pre)
-       test_h5read_s_pmf(pmflist,var,pre) 
+       test_h5bread_s_pmf(pmflist,var,pre) 
