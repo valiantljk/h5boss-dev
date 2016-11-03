@@ -1,17 +1,16 @@
 Date: Nov 2 2016
 
-#Test 1 Read 1000 Flux
-1.1 Fitsio and Fits formats:
-	python test_fitsread_pmf.py pmf1k-shuffle.csv flux
-
-1.2 H5py and HDF5 formats, 2444 converted H5Boss HDF5 v1 source files:
-	python test_h5bossread_pmf.py pmf1k-shuffle.csv FLUX none
-
+#Test 1 Read 10, 100, 1000, 10000, 100k, 1m, Flux/, See test1.sh
+#grep 'seconds' *.out
+#pmflist/
+1.1 Fitsio and Fits formats
+1.2 H5py and HDF5 formats, 2444 converted H5Boss HDF5 v1 source files
 1.3 H5py and HDF5 formats, pre-selected H5Boss HDF5 v1 file
-	python test_h5bossread_pmf.py pmf1k-shuffle.csv FLUX /global/cscratch1/sd/jialin/1k.h5
+
+
 
 TODO: 
-1. copy FITs files to Scratch
-2. memory footprint
-3. ensure data is in memory
+1. copy FITs files to Scratch--->Nov 3 2016 (YES)
+2. memory footprint --->
+3. ensure data is in memory --->checker is conducted (YES)
 

@@ -11,6 +11,7 @@ import argparse
 import pandas as pd
 fitserr=0
 coaderr=0
+checker=0
 boss_dir="/global/projecta/projectdirs/sdss/data/sdss/dr12/boss/spectro/redux/v5_7_0/"
 h5boss_dir="/global/cscratch1/sd/jialin/h5boss/"
 i_wave={"flux": 1,"ivar": 0,"andmask": 2, "ormask": 3, "wavedisp": 4, "sky": 6} # digit is the HDU number
@@ -32,12 +33,14 @@ def h5bread_s_pmf(fx,plate,mjd,fiber,wave):
        read the pmf from pre-selected hdf5 file
        
     '''
-    global fitserr, coaderr
+    global fitserr, coaderr,checker
     dwave=0
     pmfcad=plate+"/"+mjd+"/"+fiber+"/coadd"
     try:
      #if pmfcad in fx.keys():
      dwave=fx[pmfcad][wave]
+     #print (dwave.shape,dwave)
+     checker=checker+dwave[300]
      #else:
      #  print ("pmfcad %s not found in pre file %s"%(pmfcad,fx))
     except Exception as e:
@@ -53,7 +56,7 @@ def h5bread_pmf(plate,mjd,fiber,wave):
         return: fiber-th row in dataset wave
     '''
     dwave=0
-    global fitserr, coaderr
+    global fitserr, coaderr, checker
     try:
         h5bfile=h5boss_dir+plate+"-"+mjd+".hdf5"
         dh5=h5py.File(h5bfile,'r')
@@ -67,6 +70,8 @@ def h5bread_pmf(plate,mjd,fiber,wave):
         #print ("%s-%s,%s,fiber %s"%(plate,mjd,wave,fiber))
         pmfcad=plate+"/"+mjd+"/"+fiber+"/coadd"
         dwave=dh5[pmfcad][wave] # only access one wavelength, i.e., 1 column 
+        #print (dwave.shape,dwave)
+        checker=checker+dwave[300]
     except Exception as e:
         #traceback.print_exc()
         #print("extraction error %s-%s %s"%(plate,mjd,fiber))
@@ -91,8 +96,8 @@ def test_h5bread_pmf(pmflist,var):
         #print("read fiber %s error %s"%(fiber[i],var))
         pass
     print ("h5boss:%.2f seconds"%(time.time()-st))
-    global fitserr, coaderr
-    print ("hdfserr %d, coaderr %d"%(fitserr,coaderr))
+    global fitserr, coaderr, checker
+    print ("hdfserr: %d, coaderr: %d, checker: %f"%(fitserr,coaderr,checker))
 def test_h5bread_s_pmf(pmflist,var,pre):
     try:
         (plate,mjd,fiber)=parsePMF(pmflist)
@@ -117,8 +122,8 @@ def test_h5bread_s_pmf(pmflist,var,pre):
     except Exception as e:
         print("pre file close error")
     print ("h5boss:%.2f seconds"%(time.time()-st))
-    global fitserr, coaderr
-    print ("hdfserr %d, coaderr %d"%(fitserr,coaderr))
+    global fitserr, coaderr, checker
+    print ("hdfserr: %d, coaderr: %d, checker: %f"%(fitserr,coaderr, checker))
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='h5bread')
     parser.add_argument("pmf",    help="Plate/mjd/fiber list in csv")

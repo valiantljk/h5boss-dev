@@ -11,8 +11,8 @@ import pandas as pd
 fitserr=0
 coaderr=0
 boss_dir="/global/projecta/projectdirs/sdss/data/sdss/dr12/boss/spectro/redux/v5_7_0/"
-i_wave={"flux": 1,"ivar": 0,"andmask": 2, "ormask": 3, "wavedisp": 4, "sky": 6}
-
+i_wave={"flux": 0,"ivar": 1,"andmask": 2, "ormask": 3, "wavedisp": 4, "sky": 6}
+checker=0
 def parsePMF(pmflist):
     try:
         df = pd.read_csv(pmflist,delimiter=' ',names=["plates","mjds","fibers"],index_col=None,dtype=str,header=0)
@@ -32,7 +32,7 @@ def fitsread_pmf(plate,mjd,fiber,wave):
         return: fiber-th row in dataset wave
     '''
     dwave=0
-    global fitserr,coaderr
+    global fitserr,coaderr,checker
     try:
         fitsfile=boss_dir+plate+"/spPlate-"+plate+"-"+mjd+".fits"
         dfits=fitsio.FITS(fitsfile)
@@ -45,8 +45,10 @@ def fitsread_pmf(plate,mjd,fiber,wave):
         di=int(i_wave[wave])
         #print ("%s-%s,%s,fiber %s"%(plate,mjd,wave,fiber))
         dwave=dfits[di][int(fiber)-1:int(fiber),:]
+        #print (dwave.shape,dwave)
+        checker=checker+dwave[0,300]
     except Exception as e:
-        #traceback.print_exc()
+        traceback.print_exc()
         coaderr=coaderr+1
         #print("extraction error %s-%s %s"%(plate,mjd,fiber))
         pass
@@ -68,9 +70,9 @@ def test_fitsread_pmf(pmflist,var):
         #traceback.print_exc()
         #print("read fiber %s error %s"%(fiber[i],var))
         pass
-    print ("%.2f seconds"%(time.time()-st))
-    global fitserr,coaderr
-    print ("fitserr %d, coaderr %d"%(fitserr,coaderr))
+    print ("Fitsio: %.2f seconds"%(time.time()-st))
+    global fitserr,coaderr,checker
+    print ("fitserr: %d, coaderr: %d, checker: %f"%(fitserr,coaderr,checker))
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='fitsread')
     parser.add_argument("pmf",    help="Plate/mjd/fiber list in csv")
