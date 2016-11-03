@@ -26,10 +26,12 @@ parser = argparse.ArgumentParser(prog='subset')
 parser.add_argument("input",  help="HDF5 input list")
 parser.add_argument("output", help="HDF5 output")
 parser.add_argument("pmf",    help="Plate/mjd/fiber list in csv")
+#parser.add_argument("woff", help="disable the write")
 opts=parser.parse_args()
 pmflist = opts.pmf
 infiles = opts.input
 outfile = opts.output
+#woff = opts.woff
 nproc=1
 tstart=time.time()
 plates=[]
