@@ -53,7 +53,7 @@ def parallel_select():
     parser.add_argument("--mpi", help="using mpi yes/no")
     parser.add_argument("--fiber", help="specify fiber csv output")
     parser.add_argument("--catalog", help="specify catalog csv output")
-    parser.add_argument("--datamap", help="specify datamap pickle file")
+    #parser.add_argument("--datamap", help="specify datamap pickle file")
     opts=parser.parse_args()
 
     infiles = opts.input
@@ -166,7 +166,7 @@ def parallel_select():
            overwrite_template(hx,fiber_dict,'fiber')
 #           overwrite_template(outfile,fiber_dict,'fiber')
            fiber_copyte=MPI.Wtime()
-           print ("rank:%d\tlength:%d\tcost:%.2f"%(rank,fiber_item_length,fiber_copyte-fiber_copyts))
+           #print ("rank:%d\tlength:%d\tcost:%.2f"%(rank,fiber_item_length,fiber_copyte-fiber_copyts))
 #           #for each fiber, find the catalog, then copy it
 #           catalog_copyts=MPI.Wtime()
 #           overwrite_template(hx,catalog_dict,'catalog')

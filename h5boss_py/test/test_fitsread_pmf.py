@@ -10,7 +10,8 @@ import argparse
 import pandas as pd
 fitserr=0
 coaderr=0
-boss_dir="/global/projecta/projectdirs/sdss/data/sdss/dr12/boss/spectro/redux/v5_7_0/"
+#boss_dir="/global/projecta/projectdirs/sdss/data/sdss/dr12/boss/spectro/redux/v5_7_0/"
+boss_dir="/global/cscratch1/sd/jialin/bossfits/"
 i_wave={"flux": 0,"ivar": 1,"andmask": 2, "ormask": 3, "wavedisp": 4, "sky": 6}
 checker=0
 def parsePMF(pmflist):

@@ -70,13 +70,13 @@ def serial_convert(platefile,hdf5output):
 
     #--- Coadd ---
     print('loading coadds')
-    #coadds = h5boss.io.load_coadds(platefile)
+    coadds = h5boss.io.load_coadds(platefile)
 
     print('writing coadds')
-    #for i, cx in enumerate(coadds):
-    #    dataname = '{}/{}/{}/coadd'.format(plate, mjd, i+1)
-    #    cx.write(hdf5output, path=dataname, append=True)
-    h5boss.io.write_coadds_vstack(platefile, plate,mjd,hdf5output)
+    for i, cx in enumerate(coadds):
+        dataname = '{}/{}/{}/coadd'.format(plate, mjd, i+1)
+        cx.write(hdf5output, path=dataname, append=True)
+    #h5boss.io.write_coadds_vstack(platefile, plate,mjd,hdf5output)
 
     #--- Individual exposures ---
     #- Parse spPlancomb to get exposures that were used
@@ -90,25 +90,24 @@ def serial_convert(platefile,hdf5output):
             framefiles.extend(tmp)
 
     print('individual exposures')
-    #for filename in framefiles:
-    #    print(filename)
-    #    frame = h5boss.io.load_frame(filedir+'/'+filename)
-    #    if ('spFrame-b1' in filename) or ('spFrame-r1' in filename):
-    #        offset = 0
-    #    elif ('spFrame-b2' in filename) or ('spFrame-r2' in filename):
-    #        offset = 500
-    #    else:
-    #        print('huh?', filename)
-    #        sys.exit(1)
-
-    #    for i, fx in enumerate(frame):
-    #        br = fx.meta['CAMERAS'][0]
-    #        expid = fx.meta['EXPOSURE']
-    #        fiber = offset+i+1
-    #        dataname = '{}/{}/{}/exposures/{}/{}'.format(plate, mjd, fiber, expid, br)
-    #        fx.write(hdf5output, path=dataname, append=True)
+    for filename in framefiles:
+        print(filename)
+        frame = h5boss.io.load_frame(filedir+'/'+filename)
+        if ('spFrame-b1' in filename) or ('spFrame-r1' in filename):
+            offset = 0
+        elif ('spFrame-b2' in filename) or ('spFrame-r2' in filename):
+            offset = 500
+        else:
+            print('huh?', filename)
+            sys.exit(1)
+        for i, fx in enumerate(frame):
+            br = fx.meta['CAMERAS'][0]
+            expid = fx.meta['EXPOSURE']
+            fiber = offset+i+1
+            dataname = '{}/{}/{}/exposures/{}/{}'.format(plate, mjd, fiber, expid, br)
+            fx.write(hdf5output, path=dataname, append=True)
     print('writing exposures')
-    h5boss.io.write_frame_vstack(filedir,framefiles,plate,mjd,hdf5output)
+    #h5boss.io.write_frame_vstack(filedir,framefiles,plate,mjd,hdf5output)
 
     tend=time.time()-tstart
     print ('time',tend)

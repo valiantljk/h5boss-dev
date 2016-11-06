@@ -65,7 +65,9 @@ def load_frame(framefile, cframefile=None, flatfile=None):
     import os.path
     if os.path.exists(framefile)==False:
        print("v1,framefile:%s not exist"%framefile)
-       exit()
+       #exit()
+       spectra=list()
+       return spectra
     #- Load framefile and get original dimensions
     eflux = fits.getdata(framefile, 0)
     nfiber, npix = eflux.shape

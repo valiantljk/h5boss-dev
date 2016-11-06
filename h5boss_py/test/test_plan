@@ -9,8 +9,17 @@ Date: Nov 2 2016
 
 
 
-TODO: 
+#TODO: 
 1. copy FITs files to Scratch--->Nov 3 2016 (YES)
 2. memory footprint --->
 3. ensure data is in memory --->checker is conducted (YES)
+
+#NOTE: Test 1 is depended on Test 2
+
+Date: Nov 4 2016
+#Test 2 Produce subset with 10, 100, 1k, 10k, 100k, 1m fibers in HDF5 v1
+2.1 Use 1 nodes on Cori, 32 processes, strong scaling 
+2.2 Scale from 1 node to 100 nodes, #TODO later, fix issue
+2.3 #TODO Compare V1 and V2
+
 

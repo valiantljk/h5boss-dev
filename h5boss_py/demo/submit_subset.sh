@@ -7,7 +7,7 @@
 #SBATCH -o %j.out
 #SBATCH -L SCRATCH
 #SBATCH -C haswell
-#SBATCH --reservation=dmj -A mpccc
+##SBATCH --reservation=dmj -A mpccc
 #SBATCH --ntasks-per-node=32
 cd $SLURM_SUBMIT_DIR
 # below is the added line. Must be after the module command!

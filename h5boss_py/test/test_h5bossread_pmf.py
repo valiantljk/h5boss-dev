@@ -63,7 +63,7 @@ def h5bread_pmf(plate,mjd,fiber,wave):
     except Exception as e:
         #traceback.print_exc()
         fitserr=fitserr+1
-        #print("fits open error %s"%h5bfile)
+        print("HDF5 open error %s"%h5bfile)
         pass
         #pass 
     try:
