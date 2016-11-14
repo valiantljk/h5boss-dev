@@ -94,8 +94,12 @@ def parallel_select():
         (plates,mjds,fibers,hdfsource) = parse_csv(infiles, outfile, pmflist,rank)
         tstart=MPI.Wtime()
         total_files=len(hdfsource)
+        if total_files< nproc:
+           nproc=total_files
+           step=1
         #distribute the workload evenly
-        step=int(total_files / nproc)+1
+        else:
+           step=int(total_files / nproc)+1
         rank_start =int( rank * step)
         rank_end = int(rank_start + step)
         if(rank==nproc-1):
@@ -179,7 +183,7 @@ def parallel_select():
            fiber_copyts=MPI.Wtime()
            overwrite_template(hx,fiber_dict,'fiber')
            fiber_copyte=MPI.Wtime()
-           print("rank:%d\tlength:%d\tcost:%.2f"%(rank,fiber_item_length,fiber_copyte-fiber_copyts))
+           #print("rank:%d\tlength:%d\tcost:%.2f"%(rank,fiber_item_length,fiber_copyte-fiber_copyts))
            #for each fiber, find the catalog, then copy it
            #catalog_copyts=MPI.Wtime()
            #overwrite_template(hx,catalog_dict,'catalog')
@@ -191,7 +195,7 @@ def parallel_select():
            hx.close()
            tclose=MPI.Wtime()
            #print("rank:%d,fiber cost:%.2f"%(rank,fiber_copyte-fiber_copyts))
-        if rank==0:
-           print ("Overview after template creation:\n1.SSF File open: %.2f\nFiber copy total: %.2f\nCatalog copy total: %.2f\n SSF File close: %.2f\nTotal Cost(including everything): %.2f"%(topen-tcreated,fiber_copyte-fiber_copyts,catalog_copyte-catalog_copyts,tclose-tclose_s,tclose-tstart))
+           if rank==0:
+              print ("Overview after template creation:\n1.SSF File open: %.2f\nFiber copy total: %.2f\nCatalog copy total: %.2f\n SSF File close: %.2f\nTotal Cost(including everything): %.2f"%(topen-tcreated,fiber_copyte-fiber_copyts,catalog_copyte-catalog_copyts,tclose-tclose_s,tclose-tstart))
 if __name__=='__main__': 
     parallel_select()

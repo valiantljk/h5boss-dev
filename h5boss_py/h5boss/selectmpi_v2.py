@@ -217,11 +217,15 @@ def _copy_fiber(hx,key,value):  # key is the inter_group, value has filename, fi
 #           dx[ifiber]=subdx
           vlist=value[2]
           vlist.sort()
-          try:
-           dx=subfx[idset][vlist]
-          except Exception as e:
-           print ("vlist has %s,needs to be fixed"%vlist)
-           pass
+          if subfx[idset].shape[0]==500:
+           #trim vlist, remove fiber>500
+           vlist=[v for v in vlist if v<=500]
+          if len(vlist)>0:
+           try:
+            dx=subfx[idset][vlist]
+           except Exception as e:
+            print ("fx:%s dset:%s vlist has %s,needs to be fixed"%(value[0],idset,vlist))
+            pass
         else:
           subdx=subfx[idset]
           dx=subdx
@@ -233,11 +237,15 @@ def _copy_fiber(hx,key,value):  # key is the inter_group, value has filename, fi
        dx=hx[idset]
        vlist=value[2]
        vlist.sort()
-       try:
-        dx=subfx[idset][vlist]
-       except Exception as e:
-        print("vlist has %s, needs to be fixed"%vlist)
-        pass
+       if subfx[idset].shape[0]==500:
+	#trim vlist, remove fiber>500
+        vlist=[v for v in vlist if v<=500]
+       if len(vlist)>0:
+        try:
+         dx=subfx[idset][vlist]
+        except Exception as e:
+	 print ("fx:%s dset:%s vlist has %s,needs to be fixed"%(value[0],idset,vlist))
+         pass
        # may replace this for loop with a signle I/O call: subdx=subfx[idset][value[2]] then dx=subdx
 #       for ifiber in range(0,len(value[2])):
 #         fiber_off=value[2][ifiber]

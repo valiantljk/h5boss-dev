@@ -35,6 +35,8 @@ from collections import defaultdict
 import cPickle as pickle
 from copy import deepcopy
 #@profile
+#def parallel_search():
+
 def parallel_select():
     '''
     Select a set of (plates,mjds,fibers) from the realesed BOSS data in HDF5 formats.
@@ -53,7 +55,7 @@ def parallel_select():
     parser.add_argument("--mpi", help="using mpi yes/no")
     parser.add_argument("--fiber", help="specify fiber csv output")
     parser.add_argument("--catalog", help="specify catalog csv output")
-    #parser.add_argument("--datamap", help="specify datamap pickle file")
+    parser.add_argument("--datamap", help="specify datamap hickle file")
     opts=parser.parse_args()
 
     infiles = opts.input
@@ -61,6 +63,9 @@ def parallel_select():
     pmflist = opts.pmf
     fiberout = "fibercsv"
     catalogout = "catalogcsv"
+    datamap=""
+    if opts.datamap:
+     datamap=opts.datamap
     if opts.fiber:
      fiberout = opts.fiber
     if opts.catalog:
@@ -87,31 +92,38 @@ def parallel_select():
         (plates,mjds,fibers,hdfsource) = parse_csv(infiles, outfile, pmflist,rank)
         tstart=MPI.Wtime()
         total_files=len(hdfsource)
-        #distribute the workload evenly
-        step=int(total_files / nproc)
-        rank_start =int( rank * step)
-        rank_end = int(rank_start + step)
-        if(rank==nproc-1):
-            #adjust the last rank's range
-            rank_end=total_files
-            if rank_start>total_files:
-             rank_start=total_files
-        range_files=hdfsource[rank_start:rank_end]
-        if rank==0:
-          sample_file=range_files[0]
-        fiber_dict={}
-        for i in range(0,len(range_files)):
-            fiber_item = get_fiberlink_v1(range_files[i],plates,mjds,fibers)
-            if len(fiber_item)>0:
-               fiber_dict.update(fiber_item)
-        tend=MPI.Wtime()
-        #rank0 create all, then close an reopen.-Quincey Koziol 
-        #define reduce operation
-        counterop = MPI.Op.Create(add_dic, commute=True) 
         global_fiber={}
-        fiber_item_length=len(fiber_dict)
-        fiber_dict_tmp=deepcopy(fiber_dict)
-        global_fiber= comm.allreduce(fiber_dict_tmp, op=counterop)       
+        ok_global=0
+        if (opts.datamap):
+            #check if hickle file exists:
+            if (os.path.exists(datamap)):
+               global_fiber=query_datamap(datamap,plates,mjds,fibers,infiles) #abort if datamap is not complete, e.g., file not matching with infiles
+               ok_global=1
+        if(ok_global==0):               
+         #distribute the workload evenly
+         step=int(total_files / nproc)
+         rank_start =int( rank * step)
+         rank_end = int(rank_start + step)
+         if(rank==nproc-1):
+             #adjust the last rank's range
+             rank_end=total_files
+             if rank_start>total_files:
+              rank_start=total_files
+         range_files=hdfsource[rank_start:rank_end]
+         if rank==0:
+           sample_file=range_files[0]
+         fiber_dict={}
+         for i in range(0,len(range_files)):
+             fiber_item = get_fiberlink_v1(range_files[i],plates,mjds,fibers)
+             if len(fiber_item)>0:
+                fiber_dict.update(fiber_item)
+         tend=MPI.Wtime()
+         #rank0 create all, then close an reopen.-Quincey Koziol 
+         #define reduce operation
+         counterop = MPI.Op.Create(add_dic, commute=True) 
+         fiber_item_length=len(fiber_dict)
+         fiber_dict_tmp=deepcopy(fiber_dict)
+         global_fiber= comm.allreduce(fiber_dict_tmp, op=counterop)       
         treduce=MPI.Wtime()
         if rank==0:
          print ("Number of processes %d"%nproc)
@@ -131,12 +143,15 @@ def parallel_select():
 #            global_catalog=(catalog_number,catalog_types)
 #            create_template(outfile,global_catalog,'catalog',rank)
            except Exception as e:
+            print("template creation error")
             traceback.print_exc()
+            pass
            temp_end=MPI.Wtime()
            print ("Template creation time: %.2f"%(temp_end-temp_start))
+        comm.Barrier() 
         tcreated=MPI.Wtime()
 ##_______________ Fiber sorting ______________##TODO: Check later IO 
-        copy_global_catalog=global_fiber
+        copy_global_catalog=global_fiber.copy() # shallow copy
         revised_dict=locate_fiber_in_catalog(copy_global_catalog)
         #now revised_dict has: p/m, fiber_id, infile, global_offset
         copy_revised_dict=revised_dict.items()

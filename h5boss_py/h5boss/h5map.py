@@ -39,8 +39,8 @@ unique_datsetpath datasettype datasetshape filepath plate mjd fiber
 #node_type is used in ../script/subset_mpi.py, which is to create single shared file 
 def map_fiber(infile):
         '''
-           para  : filename, plate, mjd, fiber
-           return: (key, value)->(datapath, (dtype, shape, filename, plate, mjd, fiber))
+           para  : filename
+           return: (key, value)->(plate/mjd/fiber/../dataname, (dtype, shape, filename, plate, mjd, fiber))
            python dict's updating can ensure that the key is unique, i.e., datapath: plate/mjd/fiber/../dataset is unique
         '''
         global pid,fiberdatalink, cataloglink, fx, inputfile
@@ -68,8 +68,8 @@ def map_fiber(infile):
         return (fiberdatalink)
 def map_pmf(infile):
         '''
-           para  : filename, plate, mjd, fiber
-           return: (key, value)->(plates/mjd/fiber/, filename)
+           para  : filename
+           return: (key, value)->(plates/mjd/fiber, filename)
            python dict's updating can ensure that the key is unique, i.e., plate/mjd/fiber/../dataset is unique
         '''
         pmf={}

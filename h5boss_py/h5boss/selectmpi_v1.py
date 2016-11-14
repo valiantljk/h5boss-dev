@@ -169,6 +169,7 @@ def _copy_fiber(hx,key,value):
   #start=time.time()
   subfx=h5py.File(value[2],'r')
   subdx=subfx[key].value
+  #subdx=subfx[key][()]
   #sum=subdx[10][2]
   #for i in range(0,len(subdx)):
   # print(subdx[i][1])
@@ -180,8 +181,9 @@ def _copy_fiber(hx,key,value):
   pass
  try:
   #start=time.time()
-  dx=hx[str(key)]
-  dx[:]=subdx   #overwrite the existing template data
+  #dx=hx[str(key)]
+  xxx=subdx[3]
+  #dx[:]=subdx   #overwrite the existing template data
 #  print "fake write"
   #dx[:]=subfx[key].value
   #print ("%.6f"%(time.time()-start))
