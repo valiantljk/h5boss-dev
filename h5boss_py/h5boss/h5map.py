@@ -66,6 +66,68 @@ def map_fiber(infile):
          print (pid,infile)
          pass
         return (fiberdatalink)
+def _traverse_fibernode_simple(name):
+    '''
+       para   : node name in a hdf5 group
+       purpose: Find a dataset node, which should be an endpoint in its group hierarchy
+unique_datsetpath datasettype datasetshape filepath plate mjd fiber
+       return : (key,value)->(path_to_dataset, (shape)) 
+    '''
+    global fx,pid,fiberdatalink,inputfile
+    try:
+     cur_node=name.encode('ascii','ignore')
+     node=pid+'/'+cur_node
+     p=pid.split('/')[0]
+     m=pid.split('/')[1]
+     f=pid.split('/')[2]
+     node_t=str(type(fx[node]))
+     if 'dataset' in node_t:
+        node_sp=fx[node].shape[0]
+        fiberdatalink[node]=(node_sp)
+    except Exception as e:
+     traceback.print_exc()
+     pass
+def map_fiber_simple(infile):
+        '''
+           para  : filename
+           return: (key, value)->(plate/mjd/fiber/../dataname, (dtype, shape, filename, plate, mjd, fiber))
+           python dict's updating can ensure that the key is unique, i.e., datapath: plate/mjd/fiber/../dataset is unique
+        '''
+        global pid,fiberdatalink, cataloglink, fx, inputfile
+        inputfile=infile
+        try:
+         fx = h5py.File(infile, mode='r')
+         for plate in fx.keys():
+            for mjd in fx[plate].keys():
+               spid= '{}/{}'.format(plate, mjd)
+               for fib in fx[spid].keys():
+                   if (fib.isdigit()):
+                    pid = '{}/{}/{}'.format(plate, mjd, fib)
+                    fx[pid].visit(_traverse_fibernode_simple)
+                #for im in meta:
+                #  mnode=spid+'/'+im
+                #  mnode_t=fx[mnode].dtype
+                #  mnode_sp=fx[mnode].shape
+                #  fiberdatalink[mnode]=(mnode_t,mnode_sp,infile)
+               # add type infor for coadd/exposures, fname
+               k_coadd='{}/{}/coadd'.format(plate,mjd)
+               v_coadd=fx[spid+'/1/coadd'].dtype
+               eid=fx[spid+'/1/exposures/'].keys()[0]
+               k_exposure='{}/{}/exposures'.format(plate,mjd)
+               v_exposure=fx[spid+'/1/exposures/'+eid+'/b'].dtype
+               k_file='{}/{}/filename'.format(plate,mjd)
+               v_file=infile
+               fiberdatalink[k_coadd] = v_coadd
+	       fiberdatalink[k_exposure] = v_exposure
+               fiberdatalink[k_file] = v_file
+         fx.close()
+        except Exception as e:
+         print (pid)
+         traceback.print_exc()
+         print (pid,infile)
+         pass
+        return (fiberdatalink)
+
 def map_pmf(infile):
         '''
            para  : filename
