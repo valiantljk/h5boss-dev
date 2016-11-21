@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH -p regular 
-#SBATCH -N 32 
-#SBATCH -t 01:30:00
+#SBATCH -p debug 
+#SBATCH -N 1 
+#SBATCH -t 00:10:00
 #SBATCH -J subset-mpi
 #SBATCH -e %j.err
-#SBATCH -o 10k_1024.out
+#SBATCH -o %j.out
 #SBATCH -L SCRATCH
 #SBATCH -C haswell
 #SBATCH --ntasks-per-node=32
@@ -15,7 +15,7 @@ cd $SLURM_SUBMIT_DIR
 # Control Arguments:
 version="_v1" # or "_v2"
 cmdscript="../scripts/subset_mpi"$version".py "
-nproc="1024"
+nproc="32"
 #cmd="srun -n "$nproc" python-mpi -m memory_profiler "$cmdscript
 cmd="srun -n "$nproc" python-mpi "$cmdscript
 
@@ -23,7 +23,7 @@ cmd="srun -n "$nproc" python-mpi "$cmdscript
 srcfile=" input_csv/input-full-cori"$version" "
 template=$CSCRATCH/bosslover/scaling-test/ost8/$SLURM_JOB_ID.h5
 randpmf=$SLURM_JOB_ID.txt
-npmf=10000
+npmf=1000
 shuf -n $npmf pmf-list/large-scale/pmf500k -o pmf-list/large-scale/$randpmf
 sed -i '1i\'"plates mjds fibers" pmf-list/large-scale/$randpmf
 pmfquery=" pmf-list/large-scale/"$randpmf" "
@@ -42,7 +42,7 @@ k_opt5=" --datamap="     # specify a file that stored all fiber information of s
                          # if not specified, will scan all source files to create a new datamap
 
 v_opt1="yes "
-v_opt2="all "
+v_opt2="yes "
 v_opt3=$SLURM_JOB_ID"_fiber.txt "
 v_opt4=$SLURM_JOB_ID"_catalog.txt "
 v_opt5="datamap1.pk"

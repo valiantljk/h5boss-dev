@@ -85,7 +85,7 @@ unique_datsetpath datasettype datasetshape filepath plate mjd fiber
         node_sp=fx[node].shape[0]
         fiberdatalink[node]=(node_sp)
     except Exception as e:
-     traceback.print_exc()
+     #traceback.print_exc()
      pass
 def map_fiber_simple(infile):
         '''
@@ -95,6 +95,7 @@ def map_fiber_simple(infile):
         '''
         global pid,fiberdatalink, cataloglink, fx, inputfile
         inputfile=infile
+        fiberdatalinkt={}
         try:
          fx = h5py.File(infile, mode='r')
          for plate in fx.keys():
@@ -110,23 +111,26 @@ def map_fiber_simple(infile):
                 #  mnode_sp=fx[mnode].shape
                 #  fiberdatalink[mnode]=(mnode_t,mnode_sp,infile)
                # add type infor for coadd/exposures, fname
-               k_coadd='{}/{}/coadd'.format(plate,mjd)
-               v_coadd=fx[spid+'/1/coadd'].dtype
-               eid=fx[spid+'/1/exposures/'].keys()[0]
-               k_exposure='{}/{}/exposures'.format(plate,mjd)
-               v_exposure=fx[spid+'/1/exposures/'+eid+'/b'].dtype
-               k_file='{}/{}/filename'.format(plate,mjd)
-               v_file=infile
-               fiberdatalink[k_coadd] = v_coadd
-	       fiberdatalink[k_exposure] = v_exposure
-               fiberdatalink[k_file] = v_file
+               try:
+                k_coadd='{}/{}/coadd'.format(plate,mjd)
+                v_coadd=fx[spid+'/1/coadd'].dtype
+                eid=fx[spid+'/1/exposures/'].keys()[0]
+                k_exposure='{}/{}/exposures'.format(plate,mjd)
+                v_exposure=fx[spid+'/1/exposures/'+eid+'/b'].dtype
+                k_file='{}/{}/filename'.format(plate,mjd)
+                v_file=infile
+                fiberdatalinkt[k_coadd] = v_coadd
+	        fiberdatalinkt[k_exposure] = v_exposure
+                fiberdatalinkt[k_file] = v_file
+               except Exception as e:
+                pass
          fx.close()
         except Exception as e:
          print (pid)
-         traceback.print_exc()
+         #traceback.print_exc()
          print (pid,infile)
          pass
-        return (fiberdatalink)
+        return (fiberdatalink,fiberdatalinkt)
 
 def map_pmf(infile):
         '''
@@ -206,4 +210,13 @@ def coadd_map(fname_list):
       coadmap[pm]=dsize
      except Exception as e: 
        pass
-    return coadmap 
+    return coadmap
+
+
+def query_datamap(datamap,plates,mjds,fibers):
+     
+    keycoaddt='{}/{}/coadd'.format(plate,mjd) # this will return the type of coadd in plate/mjd
+    keyexpost='{}/{}/exposures'.format(plate,mjd) # this will return the type of exposure in plate/mjd 
+    keyfilename='{}/{}/filename'.format(plate,mjd) # filename of plate/mjd
+    keycoadds='{}/{}/{}/coadd'.format(plate,mjd,fiber) # datashape of fiber coadd
+    fuzzykey='{}/{}/{}/exposures'.format(plate,mjd,fiber) # datashape of exposures   

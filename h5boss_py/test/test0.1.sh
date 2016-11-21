@@ -1,11 +1,13 @@
 #!/bin/bash
-#SBATCH -p debug 
+#SBATCH -p regular 
 #SBATCH -N 1 
-#SBATCH -t 00:10:00
+#SBATCH -t 01:20:00
 #SBATCH -J bossmiss 
 #SBATCH -e %j.err
 #SBATCH -o %j.out
 #SBATCH -L SCRATCH
-
-srun -n 24 python-mpi  miss_conver.py
-
+#SBATCH -C haswell
+##198
+##136
+#srun -n 8 python-mpi  miss_conver.py 128
+srun -n 32 python-mpi  miss_conver.py 96

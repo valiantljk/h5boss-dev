@@ -54,19 +54,20 @@ def create_fiber_template(outfile,global_dict,rank):
  try:#Set the allocate time as early. --Quincey Koziol 
   for key,value in global_dict.items():
     if key.split('/')[-1] not in catalog_meta:
-     _fiber_template(hx,key,value)
+     #print ("rank:%d is creating template"%rank)
+     _fiber_template(hx,key,value,rank)
 #    else:
 #     _catalog_template(hx,key,value)
  except Exception as e:
    traceback.print_exc()
-   
+   pass 
  try:
   hx.flush()
   hx.close()
  except Exception as e:
   print("hx close error in %d"%rank)
   traceback.print_exc()
-  
+  pass
 
 def create_catlog_template(outfile,global_dict):
 #use one process to create the template
@@ -87,14 +88,14 @@ def create_catlog_template(outfile,global_dict):
    traceback.print_exc()
    pass
  try:
-  hx.flush()
+  #hx.flush()
   hx.close()
  except Exception as e:
   print("hx close error in rank0")
   traceback.print_exc()
   pass
 
-def _fiber_template(hx,key,value):
+def _fiber_template(hx,key,value,rank):
    space=h5py.h5s.create_simple(value[1])
    plist=h5py.h5p.create(h5py.h5p.DATASET_CREATE)
    plist.set_alloc_time(h5py.h5d.ALLOC_TIME_EARLY)
@@ -102,12 +103,14 @@ def _fiber_template(hx,key,value):
    try:#create intermediate groups
       hx.create_group(os.path.dirname(key))
    except Exception as e:
+      #print ("group existed")
       pass #groups existed, so pass it
    try:
     h5py.h5d.create(hx.id,key,tid,space,plist)#create dataset with property list:early allocate
+    #print ("rank:%d created data "%(rank))
+    #print (hx.id)
    except Exception as e:
-    #print("dataset create error: %s"%key)
-    #traceback.print_exc()
+    print("dataset create error: %s"%key)
     pass
 def _catalog_template(hx,key,value,catalog_types):
    value=int(value)
@@ -169,7 +172,7 @@ def _copy_fiber(hx,key,value):
   #start=time.time()
   subfx=h5py.File(value[2],'r')
   subdx=subfx[key].value
-  #subdx=subfx[key][()]
+	  #subdx=subfx[key][()]
   #sum=subdx[10][2]
   #for i in range(0,len(subdx)):
   # print(subdx[i][1])

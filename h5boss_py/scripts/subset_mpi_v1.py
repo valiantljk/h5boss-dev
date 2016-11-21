@@ -20,13 +20,14 @@ from h5boss.selectmpi_v1 import add_numpy
 from h5boss.selectmpi_v1 import create_template
 from h5boss.selectmpi_v1 import overwrite_template
 from time import gmtime, strftime
+from h5map import query_datamap
 import datetime
 import sys,os
 import time
 import optparse
 import csv
 import traceback
-#import pandas as pd
+import pandas as pd
 import numpy as np
 import optparse
 import argparse
@@ -97,7 +98,12 @@ def parallel_select():
         if (opts.datamap):
             #check if hickle file exists:
             if (os.path.exists(datamap)):
-               global_fiber=query_datamap(datamap,plates,mjds,fibers,infiles) #abort if datamap is not complete, e.g., file not matching with infiles
+               df_pmf=pd.DataFrame(
+		{'plates':plates,
+		 'mjds':mjds,
+		 'fibers':fibers
+		})
+               global_fiber=query_datamap(datamap,df_pmf) #abort if datamap is not complete, e.g., file not matching with infiles
                ok_global=1
         if(ok_global==0):               
          #distribute the workload evenly
@@ -120,10 +126,10 @@ def parallel_select():
          tend=MPI.Wtime()
          #rank0 create all, then close an reopen.-Quincey Koziol 
          #define reduce operation
-         counterop = MPI.Op.Create(add_dic, commute=True) 
-         fiber_item_length=len(fiber_dict)
-         fiber_dict_tmp=deepcopy(fiber_dict)
-         global_fiber= comm.allreduce(fiber_dict_tmp, op=counterop)       
+#         counterop = MPI.Op.Create(add_dic, commute=True) 
+#         fiber_item_length=len(fiber_dict)
+#         fiber_dict_tmp=deepcopy(fiber_dict)
+#         global_fiber= comm.allreduce(fiber_dict_tmp, op=counterop)       
         treduce=MPI.Wtime()
         if rank==0:
          print ("Number of processes %d"%nproc)
@@ -131,12 +137,34 @@ def parallel_select():
          #print ("parse csv time: %.2f"%(tstart-tstartcsv))
          print ("Get fiber metadata costs: %.2f"%(tend-tstart))
          print ("Allreduce dics costs: %.2f"%((treduce-tend)))
-        
+        #comm.Barrier() 
 ##_______________ Create File ______________##  
-        if rank==0 and (template==1 or template==2):
+#        if rank==0 and (template==1 or template==2):
+        if(template==1 or template==2):
            temp_start=MPI.Wtime()
            try:
-            create_template(outfile,global_fiber,'fiber',rank)
+            hx = h5py.File(outfile,'a',driver='mpio', comm=MPI.COMM_WORLD,libver="latest")
+            hx.flush()
+            hx.close()
+            comm.Barrier()
+            if rank==0:
+              import os.path
+              if os.path.isfile(outfile):
+                print("file created")
+              else:
+                print ("file error")
+            comm.Barrier()
+            for i in range(0,nproc):
+             #print ("rank:%d,i:%d"%(rank,i))             
+             if rank==i:
+               #print("rank:%d"%rank)
+               #tscur=time.time()
+               create_template(outfile,fiber_dict,'fiber',rank)
+               #tecur=time.time()
+               #print("rank:%d,cost:%f,len:%d"%(rank,tecur-tscur,len(fiber_dict)))
+             comm.Barrier()
+            comm.Barrier()
+#            create_template(outfile,global_fiber,'fiber',rank)
 #            catalog_number=count_unique(global_fiber) #(plates/mjd, num_fibers)
 #            print ('number of unique fibers:%d '%len(catalog_number))           
 #            catalog_types=get_catalogtypes(sample_file) # dict: meta, (type, shape)
@@ -147,24 +175,27 @@ def parallel_select():
             traceback.print_exc()
             pass
            temp_end=MPI.Wtime()
-           print ("Template creation time: %.2f"%(temp_end-temp_start))
+           if rank==0:
+            print ("Template creation time: %.2f"%(temp_end-temp_start))
         comm.Barrier() 
         tcreated=MPI.Wtime()
+        if rank==0:
+           print ("Out:Template creation time: %.2f"%(tcreated-treduce))
 ##_______________ Fiber sorting ______________##TODO: Check later IO 
-        copy_global_catalog=global_fiber.copy() # shallow copy
-        revised_dict=locate_fiber_in_catalog(copy_global_catalog)
+#       copy_global_catalog=global_fiber.copy() # shallow copy
+#       revised_dict=locate_fiber_in_catalog(copy_global_catalog)
         #now revised_dict has: p/m, fiber_id, infile, global_offset
-        copy_revised_dict=revised_dict.items()
-        total_unique_fiber=len(copy_revised_dict)
+#       copy_revised_dict=revised_dict.items()
+#       total_unique_fiber=len(copy_revised_dict)
         #distribute the workload evenly to each process
-        step=int(total_unique_fiber / nproc)+1
-        rank_start =int( rank * step)
-        rank_end = int(rank_start + step)
-        if(rank==nproc-1):
-         rank_end=total_unique_fiber # adjust the last rank's range
-         if rank_start>total_unique_fiber:
-            rank_start=total_unique_fiber
-        catalog_dict=copy_revised_dict[rank_start:rank_end]
+#       step=int(total_unique_fiber / nproc)+1
+#       rank_start =int( rank * step)
+#       rank_end = int(rank_start + step)
+#       if(rank==nproc-1):
+#        rank_end=total_unique_fiber # adjust the last rank's range
+#        if rank_start>total_unique_fiber:
+#           rank_start=total_unique_fiber
+#       catalog_dict=copy_revised_dict[rank_start:rank_end]
 ##__________________ I/O ___________________##
         if template ==0 or template==2: 
          try: 
@@ -172,7 +203,8 @@ def parallel_select():
           hx = h5py.File(outfile,'a',driver='mpio', comm=MPI.COMM_WORLD)
           hx.atomic=False 
          except Exception as e:
-          traceback.print_exc()        
+          traceback.print_exc()
+          pass        
         topen=MPI.Wtime()
         tclose=topen
         
@@ -190,7 +222,7 @@ def parallel_select():
            tclose_s=MPI.Wtime()
            hx.close()
            tclose=MPI.Wtime()
-        if rank==0:
+        if rank==0 and (template==0 or template==2):
            print ("Fiber copy: %.2f\nTotal Cost: %.2f"%(fiber_copyte-fiber_copyts,tclose-tstart))
            #print ("File open: %.2f\nFiber copy: %.2f\nFile close: %.2f\nTotal Cost: %.2f"%(topen-tcreated,fiber_copyte-fiber_copyts,tclose-tclose_s,tclose-tstart))
 if __name__=='__main__': 
