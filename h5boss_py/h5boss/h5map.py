@@ -5,6 +5,9 @@ import sys
 import os
 import csv
 import traceback
+import os.path
+import gzip
+import cPickle as pickle 
 from collections import defaultdict
 fx=""
 pid=""
@@ -213,10 +216,76 @@ def coadd_map(fname_list):
     return coadmap
 
 
-def query_datamap(datamap,plates,mjds,fibers):
-     
+def query_datamap(datamapfile,plates,mjds,fibers):
+    '''
+      This function will take the pickle file 'datamap', and run the query, 'plates, mjds, fibers', return the same structure with the global_fiber: <key,value>=<path_to_dataset,type, shape, filename>, e.g., <3973/55323/790/coadd, dtype..., 4012,/global/cscratch1/sd/jialin/h5boss/3973-55323.hdf5>
+      para: query tuple: plates,mjds,fibers, 
+      para: pickle file: datamap
+      return: global_fiber
+    ''' 
+    # reading pickle zipped file: datamap
+    assert(os.path.isfile(datamapfile))
+    try:
+        fp=gzip.open(datamapfile,'rb') 
+        datamap=pickle.load(fp)
+    except Exception as e:
+        print ("loading datamap pickle file:%s error"%datamapfile)
+    fiber_dict={}
+    lenp=len(plates)
+    assert(lenp==len(mjds))
+    assert(lenp==len(fibers)) 
+    assert(lenp>0)
+    # for each pmf, return the list of fiber_dict
+    for i in range(0,lenp): 
+       pmf=(plates[i],mjds[i],fibers[i])
+       keysall=_get_allkey(pmf)
+       fiber_item={}
+       try:
+        fiber_item=_query_datamap(keysall,datamap,pmf)
+       except Exception as e:
+        print ("pmf not found in existing datamap:",pmf)
+        pass
+       if (len(fiber_item)>0):
+         fiber_dict.update(fiber_item)  
+
+    return fiber_dict
+
+def _get_allkey(pmf):
+    plate=pmf[0]
+    mjd=pmf[1]
+    fiber=pmf[2]
+    keysall=list()
     keycoaddt='{}/{}/coadd'.format(plate,mjd) # this will return the type of coadd in plate/mjd
     keyexpost='{}/{}/exposures'.format(plate,mjd) # this will return the type of exposure in plate/mjd 
     keyfilename='{}/{}/filename'.format(plate,mjd) # filename of plate/mjd
     keycoadds='{}/{}/{}/coadd'.format(plate,mjd,fiber) # datashape of fiber coadd
-    fuzzykey='{}/{}/{}/exposures'.format(plate,mjd,fiber) # datashape of exposures   
+    keyexposs_fuzzy='{}/{}/{}/exposures'.format(plate,mjd,fiber) # datashape of exposures  
+    keysall.append(keycoaddt)
+    keysall.append(keyexpost)
+    keysall.append(keycoadds)
+    keysall.append(keyexposs_fuzzy)
+    keysall.append(keyfilename)
+    return keysall
+def _query_datamap(keysall,datamap,pmf):
+    #print ("Length of datamap:%d"%len(datamap))
+    #print ("Query: ",pmf)
+    #print ("Known key: ",keysall)
+    coaddtype=datamap[keysall[0]] # coadd type
+    expostype=datamap[keysall[1]] # exposure type
+    coaddshape=datamap[keysall[2]] # coadd shape
+    #exposure fuzzy generator
+    exposure_keylist=fuzzy_search(keysall[3],datamap)
+    filename=datamap[keysall[4]]  # file name
+    # fill into the dict list
+    # fill coadd first
+    fiber_dict={} # initialize the dictionary 
+    fiber_dict[keysall[2]]=(coaddtype,coaddshape,filename)
+    # then for each expid, fill in the dictionary
+    for iexp in exposure_keylist:
+        #type for iexp is known and same for all: expostype
+        #filename is same: filename
+        #get the shape of each iexp
+        iexposshape=datamap[iexp]
+        #fill in the dic
+        fiber_dict[iexp]=(expostype,(iexposshape,),filename)
+    return fiber_dict     

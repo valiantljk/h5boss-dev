@@ -105,8 +105,10 @@ for line in open(planfile):
         framefiles.extend(tmp)
         
 print('individual exposures')
+print("len:%d"%len(framefiles))
 for filename in framefiles:
     #print(filename)
+    kk=1
     frame = h5boss.io.load_frame(filedir+'/'+filename)
     if ('spFrame-b1' in filename) or ('spFrame-r1' in filename):
         offset = 0
@@ -114,9 +116,10 @@ for filename in framefiles:
         offset = 500
     else:
         print('huh?', filename)
-        sys.exit(1)
-    
-    for i, fx in enumerate(frame):
+        #sys.exit(1)
+        kk=1
+    if kk==0:
+     for i, fx in enumerate(frame):
         if opts.test and i%100 != 0: continue
         br = fx.meta['CAMERAS'][0]
         expid = fx.meta['EXPOSURE']

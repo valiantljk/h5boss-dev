@@ -18,12 +18,11 @@ import traceback
 pkfile="allfiber.pk"
 hkfile="allfiber.hk"
 pkfilesimple="allfiber.pksim"
-pkfilesimpleall="allfiber.pksimall"
 pkfilesimpleall=sys.argv[2]
 hkfilesimple="allfiber.hksim"
 jsfilesimple="allfiber.jssim"
 dirpath="/global/cscratch1/sd/jialin/h5boss"
-mapdir="/global/cscratch1/sd/jialin/h5boss/map/"
+mapdir="/global/cscratch1/sd/jialin/h5boss/map/allmap"
 comm=MPI.COMM_WORLD
 nproc= comm.Get_size()
 rank= comm.Get_rank()
@@ -54,7 +53,7 @@ comm.Barrier()
 comm.Barrier()
 counterop = MPI.Op.Create(add_dic, commute=True)
 treduce=MPI.Wtime()
-#global_fiber_dms= comm.allreduce(global_fiber_dm, op=counterop)
+global_fiber_dms= comm.allreduce(fiber_item, op=counterop)
 treduceend=MPI.Wtime()-treduce
 if rank==0:
  print("Total cost:%f"%(treduceend))
@@ -70,7 +69,7 @@ comm.Barrier()
 tpkstart=time.time()
 try:
  with gzip.open(mapdir+pkfilesimpleall,"wb") as f:
-  pickle.dump(fiber_item,f)
+  pickle.dump(global_fiber_dms,f)
  #pickle.dump(fiber_item,open(mapdir+pkfilesimple+"_"+str(rank),"wb"))
  #hkl.dump(fiber_item,mapdir+hkfilesimple+"_"+str(rank),mode="w")
  #json.dump(fiber_item,open(mapdir+jsfilesimple+"_"+str(rank),mode="w"))

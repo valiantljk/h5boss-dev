@@ -45,10 +45,10 @@ v_opt1="yes "
 v_opt2="yes "
 v_opt3=$SLURM_JOB_ID"_fiber.txt "
 v_opt4=$SLURM_JOB_ID"_catalog.txt "
-v_opt5="datamap1.pk"
+v_opt5="all.pk"
 
 
 
-run=$cmd$srcfile$template$pmfquery$k_opt1$v_opt1$k_opt2$v_opt2$k_opt3$v_opt3$k_opt4$v_opt4 #$k_opt5$v_opt5
+run=$cmd$srcfile$template$pmfquery$k_opt1$v_opt1$k_opt2$v_opt2$k_opt3$v_opt3$k_opt4$v_opt4$k_opt5$v_opt5
 echo $run
 $run

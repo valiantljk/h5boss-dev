@@ -93,18 +93,25 @@ def serial_convert(platefile,hdf5output,version=None):
 
     print('individual exposures')
     if (version!="2"):
+     print ("version 2")
+     print (len(framefiles))
      for filename in framefiles:
-        print(filename)
-        frame = h5boss.io.load_frame(filedir+'/'+filename)
+        print("file:%s"%filename)
+        kk=0
+        try:
+         frame = h5boss.io.load_frame(filedir+'/'+filename)
+        except Exception as e:
+         pass
         if ('spFrame-b1' in filename) or ('spFrame-r1' in filename):
             offset = 0
         elif ('spFrame-b2' in filename) or ('spFrame-r2' in filename):
             offset = 500
         else:
-            print('huh?', filename)
-            #sys.exit(1)
-            continue
-        for i, fx in enumerate(frame):
+            print('huh? plz not stop, nov 21 2016', filename)
+            ##sys.exit(1)
+            kk=1
+        if kk==0:
+         for i, fx in enumerate(frame):
             br = fx.meta['CAMERAS'][0]
             expid = fx.meta['EXPOSURE']
             fiber = offset+i+1
