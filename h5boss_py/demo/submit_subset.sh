@@ -21,13 +21,13 @@ cmd="srun -n "$nproc" python-mpi "$cmdscript
 
 # Positional Arguments:
 srcfile=" input_csv/input-full-cori"$version" "
-template=$CSCRATCH/bosslover/scaling-test/ost8/$SLURM_JOB_ID.h5
+template=$CSCRATCH/bosslover/scaling-test/ost1/$SLURM_JOB_ID.h5
 randpmf=$SLURM_JOB_ID.txt
 npmf=1000
-shuf -n $npmf pmf-list/large-scale/pmf500k -o pmf-list/large-scale/$randpmf
-sed -i '1i\'"plates mjds fibers" pmf-list/large-scale/$randpmf
-pmfquery=" pmf-list/large-scale/"$randpmf" "
-
+#shuf -n $npmf pmf-list/large-scale/pmf500k -o pmf-list/large-scale/$randpmf
+#sed -i '1i\'"plates mjds fibers" pmf-list/large-scale/$randpmf
+#pmfquery=" pmf-list/large-scale/"$randpmf" "
+pmfquery=" pmflist/1k_nov2 "
 # Optional Arguments:
 k_opt1=" --mpi="         # 'yes' for parallel read/wirte 
                          # 'no'  for serial read/write
@@ -42,13 +42,15 @@ k_opt5=" --datamap="     # specify a file that stored all fiber information of s
                          # if not specified, will scan all source files to create a new datamap
 
 v_opt1="yes "
-v_opt2="yes "
+v_opt2="all "
 v_opt3=$SLURM_JOB_ID"_fiber.txt "
 v_opt4=$SLURM_JOB_ID"_catalog.txt "
 v_opt5="all.pk"
 
 
 
-run=$cmd$srcfile$template$pmfquery$k_opt1$v_opt1$k_opt2$v_opt2$k_opt3$v_opt3$k_opt4$v_opt4$k_opt5$v_opt5
+#run=$cmd$srcfile$template$pmfquery$k_opt1$v_opt1$k_opt2$v_opt2$k_opt3$v_opt3$k_opt4$v_opt4$k_opt5$v_opt5
+run=$cmd$srcfile$template$pmfquery$k_opt1$v_opt1$k_opt2$v_opt2$k_opt3$v_opt3$k_opt4$v_opt4
+echo $run >>${SLURM_JOB_ID}.err
 echo $run
 $run

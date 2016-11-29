@@ -222,13 +222,19 @@ def _copy_fiber(hx,key,value):  # key is the inter_group, value has filename, fi
            vlist=[v for v in vlist if v<=500]
           if len(vlist)>0:
            try:
-            dx=subfx[idset][vlist]
+            #print (idset, vlist)
+            #print (subfx[idset][vlist])
+            if len(vlist)==1:
+	      dx[:] = subfx[idset][vlist][0]
+	    else:
+              dx[:]=subfx[idset][vlist]
+            #print ("dx:",dx)
            except Exception as e:
-            print ("fx:%s dset:%s vlist has %s,needs to be fixed"%(value[0],idset,vlist))
+            print ("fx:%s dset:%s dx.shape %s vlist has %s,needs to be fixed"%(value[0],idset,dx.shape,vlist))
             pass
         else:
           subdx=subfx[idset]
-          dx=subdx
+          dx[:]=subdx
        except Exception as e:
           print ("infile:%s,group:%s,dataset:%s,shape:%s. outdt:%s,otshape:%s"%(value[0],key,icoad,subdx.shape,idset,dx.shape))
   elif key.split('/')[-1]=="b" or key.split('/')[-1]=="r": # copy datasets in exposures groups
@@ -242,7 +248,10 @@ def _copy_fiber(hx,key,value):  # key is the inter_group, value has filename, fi
         vlist=[v for v in vlist if v<=500]
        if len(vlist)>0:
         try:
-         dx=subfx[idset][vlist]
+         if len(vlist)==1:
+	   dx[:]=subfx[idset][vlist][0]
+         else:
+           dx[:]=subfx[idset][vlist]
         except Exception as e:
 	 print ("fx:%s dset:%s vlist has %s,needs to be fixed"%(value[0],idset,vlist))
          pass

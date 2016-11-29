@@ -47,11 +47,15 @@ def h5bread_s_pmf(fx,plate,mjd,fiber,wave):
     dread=time.time()
     try:
      #if pmfcad in fx.keys():
-     dwave=fx[pmfcad][wave]
-     #print (dwave.shape,dwave)
-     checker=checker+dwave[300]
-     #else:
-     #  print ("pmfcad %s not found in pre file %s"%(pmfcad,fx))
+     if wave=="all":
+      dwave=fx[pmfcad][:]
+      checker=checker+dwave[0][0]
+     else:
+      dwave=fx[pmfcad][wave]
+      #print (dwave.shape,dwave)
+      checker=checker+dwave[300]
+      #else:
+      #  print ("pmfcad %s not found in pre file %s"%(pmfcad,fx))
     except Exception as e:
       #traceback.print_exc()
       coaderr=coaderr+1
@@ -69,8 +73,20 @@ def h5bread_s2_pmf(fx,plate,mjd,fiber,wave):
     pmfcad=plate+"/"+mjd+"/coadds/"+wave
     dread=time.time()
     try:
-     dwave=fx[pmfcad][int(fiber)-1]
-     checker=checker+dwave[300]
+     if wave=="all":
+      for iiwave in h5b_wave2:
+       pmfcad=plate+"/"+mjd+"/coadds/"+iiwave
+       #dwave=fx[pmfcad][int(fiber)-1]
+       dwave=fx[pmfcad][0] #TODO: version 2, catalog table doesn't contain the index of fiber, needs to modify the catalog's plugmap table and inser the fiber id in one of its column
+       #without knowing the index, we just extract all fibers's data. The 'plate/mjd'/fiber should be unique first, though, without the help of indexing we just get the first fiber for simplicity
+       if iiwave=="flux":
+        checker=checker+dwave[300] 
+     else:
+      #dwave=fx[pmfcad][int(fiber)-1]
+      
+      dwave=fx[pmfcad][0]
+      print (dwave.shape,dwave)
+      checker=checker+dwave[300]
     except Exception as e:
       coaderr=coaderr+1
       pass
@@ -118,7 +134,7 @@ def h5bread_pmf(plate,mjd,fiber,wave):
     return dwave
 def h5bread_2_pmf(plate,mjd,fiber,wave):
     '''
-        read the pmf from source hdf5 files, version 1, to have an apple2apple comparison with fitsread_pmf
+        read the pmf from source hdf5 files, version 2, to have an apple2apple comparison with fitsread_pmf
         para: plate, mjd, fiber
         para: wave is the name of wavelength variable
         return: fiber-th row in dataset wave
@@ -147,7 +163,8 @@ def h5bread_2_pmf(plate,mjd,fiber,wave):
         #pmfcad=plate+"/"+mjd+"/"+fiber+"/coadd"
         pmfcad=plate+"/"+mjd+"/coadds/"+wave
         dwave=dh5[pmfcad][int(fiber)-1] # only access one wavelength, i.e., 1 column 
-        #print (dwave.shape,dwave)
+        print (dwave.shape,dwave)
+        
         checker=checker+dwave[300]
         global h5file
         h5file=h5file+1

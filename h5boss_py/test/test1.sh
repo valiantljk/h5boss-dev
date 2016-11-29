@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p regular 
+#SBATCH -p debug 
 #SBATCH -N 1 
 #SBATCH -t 00:08:00
 #SBATCH -J subset-v2-h5
@@ -13,8 +13,8 @@ cd $SLURM_SUBMIT_DIR
 pmf=10_nov2 #pmflist/10_nov2 100_nov2 1k_nov2 10k_nov2 100k_nov2 1m_nov2
 
 #pre=/global/cscratch1/sd/jialin/h5boss_pre/$pmf.h5 
-#pre=/global/cscratch1/sd/jialin/h5boss_pre/${pmf}_v2.h5
-pre=none
+pre=/global/cscratch1/sd/jialin/h5boss_pre/${pmf}_v2.h5
+#pre=none
 #var=flux # WAVE
 var=flux
 ver=2
@@ -32,7 +32,8 @@ cmd2="python test_h5bossread_pmf.py pmflist/"$pmf" "$var" none"
 #fits test,/global/projecta/projectdirs/sdss/data/sdss/dr12/boss/spectro/redux/v5_7_0 
 #cmd3="mprof run test_fitsread_pmf.py pmflist/"$pmf" flux"
 cmd3="python test_fitsread_pmf.py pmflist/"$pmf" flux"
-echo $cmd1
+echo $cmd1 >> ${SLURM_JOB_ID}.out
+echo $cmd1 >> ${SLURM_JOB_ID}.err
 $cmd1
 #echo $cmd2
 #$cmd2
