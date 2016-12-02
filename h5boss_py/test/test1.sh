@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH -p debug 
+#SBATCH -p debug
 #SBATCH -N 1 
-#SBATCH -t 00:08:00
+#SBATCH -t 00:18:00
 #SBATCH -J subset-v2-h5
 #SBATCH -e %j.err
 #SBATCH -o %j.out
@@ -10,14 +10,14 @@
 ##SBATCH --ntasks-per-node=32
 cd $SLURM_SUBMIT_DIR
 
-pmf=10_nov2 #pmflist/10_nov2 100_nov2 1k_nov2 10k_nov2 100k_nov2 1m_nov2
+pmf=10k_nov2 #pmflist/10_nov2 100_nov2 1k_nov2 10k_nov2 100k_nov2 1m_nov2
 
-#pre=/global/cscratch1/sd/jialin/h5boss_pre/$pmf.h5 
-pre=/global/cscratch1/sd/jialin/h5boss_pre/${pmf}_v2.h5
-#pre=none
+#pre=/global/cscratch1/sd/jialin/h5boss_pre/${pmf}_v1.h5 
+#pre=/global/cscratch1/sd/jialin/h5boss_pre/${pmf}_v2.h5
+pre=none
 #var=flux # WAVE
-var=flux
-ver=2
+var=FLUX
+ver=1
 #case 1: WAVE and FLUX only
 #TODO: rewrite the code to support case 2 and 3
 	#case 2: WAVE, FLUX, IVAR, and MASK

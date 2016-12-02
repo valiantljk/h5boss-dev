@@ -85,7 +85,7 @@ def h5bread_s2_pmf(fx,plate,mjd,fiber,wave):
       #dwave=fx[pmfcad][int(fiber)-1]
       
       dwave=fx[pmfcad][0]
-      print (dwave.shape,dwave)
+      #print (dwave.shape,dwave)
       checker=checker+dwave[300]
     except Exception as e:
       coaderr=coaderr+1
@@ -163,7 +163,7 @@ def h5bread_2_pmf(plate,mjd,fiber,wave):
         #pmfcad=plate+"/"+mjd+"/"+fiber+"/coadd"
         pmfcad=plate+"/"+mjd+"/coadds/"+wave
         dwave=dh5[pmfcad][int(fiber)-1] # only access one wavelength, i.e., 1 column 
-        print (dwave.shape,dwave)
+        #print (dwave.shape,dwave)
         
         checker=checker+dwave[300]
         global h5file

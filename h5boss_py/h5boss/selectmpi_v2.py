@@ -230,7 +230,7 @@ def _copy_fiber(hx,key,value):  # key is the inter_group, value has filename, fi
               dx[:]=subfx[idset][vlist]
             #print ("dx:",dx)
            except Exception as e:
-            print ("fx:%s dset:%s dx.shape %s vlist has %s,needs to be fixed"%(value[0],idset,dx.shape,vlist))
+            #print ("fx:%s dset:%s dx.shape %s vlist has %s,needs to be fixed"%(value[0],idset,dx.shape,vlist))
             pass
         else:
           subdx=subfx[idset]

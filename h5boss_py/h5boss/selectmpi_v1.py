@@ -26,9 +26,10 @@ def create_slavefile(infile,plates,mjds,fibers,masterfile,rank,id):
       traceback.print_exc()
       pass 
 def add_dic(dict1,dict2,datatype):
-    for item in dict2:
-      if item not in dict1:
-        dict1[item] = dict2[item]
+    #for item in dict2:
+    #  if item not in dict1:
+    #    dict1[item] = dict2[item]
+    dict1.update(dict2)
     return dict1
 def add_numpy(dict1, dict2, datatype):
     if(dict2.size==0):
@@ -142,17 +143,17 @@ def _catalog_template(hx,key,value,catalog_types):
      traceback.print_exc()
      pass
 
-def overwrite_template(hx, data_dict,choice):
+def overwrite_template(hx, data_dict,choice,rwmode):
  #Read/Write all dataset into final file, 
  #each rank handles one fiber_dict, which contains multiple fiber_item
  if choice=='fiber':    
   try:
    for key, value in data_dict.items():
     if key.split('/')[-1] not in catalog_meta:
-      _copy_fiber(hx,key,value)
+      _copy_fiber(hx,key,value,rwmode)
   except Exception as e:
    print ("Data read/write error key:%s file:%s"%(key,value[2]))
-   traceback.print_exc()
+   #traceback.print_exc()
    pass
  elif choice=='catalog':
   try:
@@ -161,13 +162,13 @@ def overwrite_template(hx, data_dict,choice):
     # key: pm, value: (fiberid, global_offset, infile)    
     values_off=data_dict[i][1]
     for i in range(0,len(values_off)): 
-      _copy_catalog(hx,pm,values_off[i])
+      _copy_catalog(hx,pm,values_off[i],rwmode)
   except Exception as e:
    print ("Data read/write error key:%s file:%s"%(key,value[2]))
    traceback.print_exc()
    pass
 #@profile
-def _copy_fiber(hx,key,value):
+def _copy_fiber(hx,key,value,rwmode):
  try:
   #start=time.time()
   subfx=h5py.File(value[2],'r')
@@ -184,21 +185,22 @@ def _copy_fiber(hx,key,value):
   traceback.print_exc()
   print ("read subfile %s error"%value[2])
   pass
- try:
+ if rwmode=="rw":
+  try:
   #start=time.time()
-  dx=hx[str(key)]
+   dx=hx[str(key)]
   #xxx=subdx[3]
   #dx[:]
-  #dx[:]=subdx   #overwrite the existing template data
+   dx[:]=subdx   #overwrite the existing template data
 #  print "fake write"
   #dx[:]=subfx[key].value
   #print ("%.6f"%(time.time()-start))
- except Exception as e:
-  traceback.print_exc()
-  print ("overwrite error")
-  pass
+  except Exception as e:
+   traceback.print_exc()
+   print ("overwrite error")
+   pass
 
-def _copy_catalog(hx,key,values_off):
+def _copy_catalog(hx,key,values_off,rwmode):
    try:
     fx=h5py.File(values_off[1],'r')
     plate=key.split('/')[0]
@@ -211,7 +213,10 @@ def _copy_catalog(hx,key,values_off):
      maxoff=hx[id].shape[0]-1
      if offset>maxoff:
        offset=maxoff
-     hx[id][offset]=fx[id][int(fiber_id)-1]
+     if rwmode=="rw":
+      hx[id][offset]=fx[id][int(fiber_id)-1]
+     else:# read only, no write to template
+      ddx=fx[id][int(fiber_id)-1]
    except Exception as e:
     traceback.print_exc()
     print ("catacopy:%s error:%d"%(id,int(fiber_id)-1))  

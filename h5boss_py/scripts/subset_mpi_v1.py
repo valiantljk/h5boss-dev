@@ -36,6 +36,7 @@ import datetime
 from collections import defaultdict
 import cPickle as pickle
 from copy import deepcopy
+import gzip 
 #@profile
 
 def parallel_select():
@@ -56,7 +57,9 @@ def parallel_select():
     parser.add_argument("--mpi", help="using mpi yes/no")
     parser.add_argument("--fiber", help="specify fiber csv output")
     parser.add_argument("--catalog", help="specify catalog csv output")
-    parser.add_argument("--datamap", help="specify datamap hickle file")
+    parser.add_argument("--datamapr", help="specify pre-scanned datamap gzip pickle file")
+    parser.add_argument("--datamapw", help="specify datamap for dumpping selected map based on pmf query")
+    parser.add_argument("--rwmode", help="specify readwrite mode, r or rw")
     opts=parser.parse_args()
 
     infiles = opts.input
@@ -64,9 +67,15 @@ def parallel_select():
     pmflist = opts.pmf
     fiberout = "fibercsv"
     catalogout = "catalogcsv"
-    datamap=""
-    if opts.datamap:
-     datamap=opts.datamap
+    datamapr=""
+    if opts.datamapr:
+     datamapr=opts.datamapr
+    datamapw=""
+    if opts.datamapw:
+     datamapw=opts.datamapw
+    rwmode="rw"
+    if opts.rwmode:
+     rwmode=opts.rwmode
     if opts.fiber:
      fiberout = opts.fiber
     if opts.catalog:
@@ -97,14 +106,9 @@ def parallel_select():
         using_pickle=0
 
 ##______Query with pre-scanned metadata, pickle file_______ ##
-        if (opts.datamap):
-            if (os.path.isfile(datamap)):
-               df_pmf=pd.DataFrame(
-		{'plates':plates,
-		 'mjds':mjds,
-		 'fibers':fibers
-		})
-               global_fiber=query_datamap(datamap,plates,mjds,fibers) #abort if datamap is not complete, e.g., file not matching with infiles
+        if (opts.datamapr):# can use a ready pickle, or use a total pickle to search through it
+            if (os.path.isfile(datamapr)):
+               global_fiber=query_datamap(datamapr,plates,mjds,fibers) #abort if datamap is not complete, e.g., file not matching with infiles
                using_pickle=1
 
 ##______Query by scanning all files_________________ ##
@@ -138,14 +142,24 @@ def parallel_select():
 
         if rank==0:
          print ("Number of processes %d"%nproc)
-         print ("length of global_fiber: %d"%(len(global_fiber)))
+         print ("Length of global_fiber: %d"%(len(global_fiber)))
          #print ("parse csv time: %.2f"%(tstart-tstartcsv))
          print ("Get fiber metadata costs: %.2f"%(tend-tstart))
          print ("Allreduce dics costs: %.2f"%((treduce-tend)))
 
-        create_file_by_all=0
+        create_file_by_all=0 # by default, only use 1 process to create the template file. 
+
+##______Write out selected pre-scanned metadata, pickle file_______ ##
+        if (opts.datamapw):
+           with gzip.open(datamapw,"wb") as f3:
+              pickle.dump(global_fiber,f3)
+
+        tdump=MPI.Wtime()
+        if rank==0:
+         print ("Finish scanning/reducing/dumpping at %.2f"%(tdump-tstart))
+
 ##______Create File(Fiber only, for test) by all processes,sequentially____##  
-        if(using_pickle==0 and create_file_by_all==1 and (template==1 or template==2)):
+        if(using_pickle==0 and rwmode=="rw" and create_file_by_all==1 and (template==1 or template==2)):
            temp_start=MPI.Wtime()
            try:
             hx = h5py.File(outfile,'a',driver='mpio', comm=MPI.COMM_WORLD,libver="latest")
@@ -171,7 +185,7 @@ def parallel_select():
            if rank==0:
             print ("Template creation time: %.2f"%(temp_end-temp_start))
 ##______Create File by one process, using pickle or not_________##  
-        if rank==0 and create_file_by_all==0 and (template==1 or template==2):
+        if rank==0 and rwmode=="rw" and create_file_by_all==0 and (template==1 or template==2):
            try:
             if using_pickle==1: 
              create_template(outfile,global_fiber,'fiber',rank)
@@ -209,8 +223,8 @@ def parallel_select():
 #       catalog_dict=copy_revised_dict[rank_start:rank_end]
 
 
-##______Open file collectively ___________________##
-        if template ==0 or template==2: 
+##______Open the template collectively ___________________##
+        if template ==0 or template==2: # use previously created template or new template created within this job
          try: 
           #collectively open file
           hx = h5py.File(outfile,'a',driver='mpio', comm=MPI.COMM_WORLD)
@@ -221,9 +235,9 @@ def parallel_select():
         topen=MPI.Wtime()
         tclose=topen
 ##______Read/Write data collectively ___________________##        
-        if template==0 or template==2:
+        if (template==0 or template==2) and (rwmode=="r" or rwmode=="rw"):
            fiber_copyts=MPI.Wtime()
-           overwrite_template(hx,fiber_dict,'fiber')
+           overwrite_template(hx,fiber_dict,'fiber',rwmode)
 #          overwrite_template(outfile,fiber_dict,'fiber')
            fiber_copyte=MPI.Wtime()
            #print ("rank:%d\tlength:%d\tcost:%.2f"%(rank,fiber_item_length,fiber_copyte-fiber_copyts))
@@ -235,10 +249,15 @@ def parallel_select():
            tclose_s=MPI.Wtime()
            hx.close()
            tclose=MPI.Wtime()
-        if rank==0 and (template==0 or template==2):
-           print ("Fiber copy: %.2f\nTotal Cost: %.2f"%(fiber_copyte-fiber_copyts,tclose-tstart))
+        if rank==0 and (template==0 or template==2) and (rwmode=="r" or rwmode=="rw"):
+           print ("Fiber copy(%s): %.2f\nTotal Cost: %.2f"%(rwmode,fiber_copyte-fiber_copyts,tclose-tstart))
            #print ("File open: %.2f\nFiber copy: %.2f\nFile close: %.2f\nTotal Cost: %.2f"%(topen-tcreated,fiber_copyte-fiber_copyts,tclose-tclose_s,tclose-tstart))
         if rank==0 and template==1:
            print ("Total Cost: %.2f"%(tclose-tstart))
+        if rank==0:
+           try:
+              print ("Total Cost: %.2f"%(tclose-tstart))
+           except Exception as e:
+              pass 
 if __name__=='__main__': 
     parallel_select()

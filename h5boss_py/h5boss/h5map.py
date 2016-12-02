@@ -249,6 +249,9 @@ def query_datamap(datamapfile,plates,mjds,fibers):
          fiber_dict.update(fiber_item)  
 
     return fiber_dict
+def fuzzy_search(fuzzy_key,datamap):
+    result = [key for key in datamap if fuzzy_key in key.lower()]
+    return result
 
 def _get_allkey(pmf):
     plate=pmf[0]
